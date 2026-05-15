@@ -23,7 +23,9 @@ st.set_page_config(
 )
 
 st.title("🤖 Advanced PDF RAG Chatbot")
-st.markdown("Upload PDF files and chat with your documents")
+st.markdown(
+    "Upload PDF files and chat with your documents"
+)
 
 with st.sidebar:
 
@@ -35,7 +37,13 @@ with st.sidebar:
     )
 
     st.markdown(
-        "[Create Free Mistral API Key](https://console.mistral.ai/api-keys)"
+        """
+[Create Free Mistral API Key](https://console.mistral.ai/api-keys)
+"""
+    )
+
+    exam_mode = st.toggle(
+        "🎓 RGPV Exam Mode"
     )
 
     chunk_size = st.slider(
@@ -67,20 +75,25 @@ with st.sidebar:
         st.rerun()
 
 if "messages" not in st.session_state:
+
     st.session_state.messages = []
 
 if "chat_history" not in st.session_state:
+
     st.session_state.chat_history = []
 
 if "vectorstore" not in st.session_state:
+
     st.session_state.vectorstore = None
 
-api_key = mistral_api_key or os.getenv("MISTRAL_API_KEY")
+api_key = mistral_api_key or os.getenv(
+    "MISTRAL_API_KEY"
+)
 
 if not api_key:
 
     st.warning(
-        "Please add your Mistral API key from the sidebar."
+        "Please enter your Mistral API key from sidebar."
     )
 
     st.stop()
@@ -98,10 +111,10 @@ try:
         api_key
     )
 
-except Exception as e:
+except Exception:
 
     st.error(
-        "Invalid Mistral API Key."
+        "Invalid Mistral API Key"
     )
 
     st.stop()
@@ -157,9 +170,10 @@ if uploaded_files:
         )
 
         vectorstore = Chroma.from_documents(
-       documents=chunks,
-       embedding=embedding_model
-        )     
+            documents=chunks,
+            embedding=embedding_model
+        )
+
         st.session_state.vectorstore = (
             vectorstore
         )
@@ -192,10 +206,51 @@ if st.session_state.vectorstore:
     except Exception:
 
         st.error(
-            "Unable to connect to Mistral AI."
+            "Unable to connect with Mistral AI"
         )
 
         st.stop()
+
+    memory_prompt = ChatPromptTemplate.from_messages([
+
+        (
+            "system",
+
+            """
+You are a query rewriting AI.
+
+Convert follow-up questions into
+standalone questions using chat history.
+
+Example:
+
+History:
+User: What is waterfall model?
+
+Follow Up:
+Explain its types
+
+Standalone Question:
+Explain types of waterfall model
+
+Only return the standalone question.
+"""
+        ),
+
+        (
+            "human",
+
+            """
+Chat History:
+{chat_history}
+
+Follow Up Question:
+{question}
+
+Standalone Question:
+"""
+        )
+    ])
 
     prompt = ChatPromptTemplate.from_messages([
 
@@ -203,17 +258,20 @@ if st.session_state.vectorstore:
             "system",
 
             """
-You are an intelligent AI PDF assistant.
+You are an advanced AI PDF assistant.
 
-Answer ONLY from the provided context.
+Answer ONLY from provided context.
 
 Rules:
-1. Give accurate answers.
-2. Use previous conversation memory.
-3. Mention source file name and page number.
-4. If answer is missing, say:
-'I could not find the answer in the document.'
-5. Do not hallucinate.
+1. Understand follow-up questions.
+2. Use chat history properly.
+3. Give detailed and accurate answers.
+4. Give exam-oriented answers if needed.
+5. Use bullet points where useful.
+6. Mention source file and page number.
+7. If answer does not exist say:
+"I could not find the answer in the document."
+8. Never hallucinate.
 """
         ),
 
@@ -246,12 +304,24 @@ Answer:
             )
 
     query = st.chat_input(
-        "Ask anything from PDFs..."
+        "Ask anything from your PDFs..."
     )
 
     if query:
 
+        if exam_mode:
+
+            query += """
+            
+Explain for RGPV exam with:
+- definition
+- important points
+- advantages/disadvantages if possible
+- conclusion
+"""
+
         st.session_state.messages.append({
+
             "role": "user",
             "content": query
         })
@@ -264,7 +334,26 @@ Answer:
 
             st.markdown(query)
 
-        docs = retriever.invoke(query)
+        memory_chain = memory_prompt | llm
+
+        standalone_question = (
+            memory_chain.invoke({
+
+                "chat_history": "\n".join(
+                    st.session_state.chat_history[-6:]
+                ),
+
+                "question": query
+            })
+        )
+
+        final_query = (
+            standalone_question.content
+        )
+
+        docs = retriever.invoke(
+            final_query
+        )
 
         context = ""
 
@@ -282,13 +371,16 @@ Answer:
                 "Unknown"
             )
 
+            content = doc.page_content
+
             context += f"""
 
-
+Source File: {source}
 
 Page Number: {page}
 
-
+Content:
+{content}
 
 """
 
@@ -304,7 +396,7 @@ Page Number: {page}
 
             "context": context,
 
-            "question": query
+            "question": final_query
         })
 
         with st.chat_message("assistant"):
@@ -329,7 +421,9 @@ Page Number: {page}
                         f"- {src}\n"
                     )
 
-                st.markdown(ai_response)
+                st.markdown(
+                    ai_response
+                )
 
         st.session_state.messages.append({
 
