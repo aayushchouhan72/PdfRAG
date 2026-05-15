@@ -284,12 +284,11 @@ Answer:
 
             context += f"""
 
-Source File: {source}
+
 
 Page Number: {page}
 
-Content:
-{doc.page_content}
+
 
 """
 
