@@ -157,11 +157,9 @@ if uploaded_files:
         )
 
         vectorstore = Chroma.from_documents(
-            documents=chunks,
-            embedding=embedding_model,
-            persist_directory="chroma_db"
-        )
-
+       documents=chunks,
+       embedding=embedding_model
+        )     
         st.session_state.vectorstore = (
             vectorstore
         )
