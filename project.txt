@@ -1,0 +1,16 @@
+
+/ reel automation
+
+User sends reel
+        ↓
+Downloader Agent
+        ↓
+Transcription Agent
+        ↓
+Editing Agent
+        ↓
+Caption Generator Agent
+        ↓
+Hashtag Agent
+        ↓
+Instagram Upload Agent

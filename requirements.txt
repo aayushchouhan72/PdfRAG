@@ -1,0 +1,46 @@
+# Core LLM frameworks
+langchain
+langchain-community
+langchain-core
+
+# OpenAI
+openai
+
+# Mistral
+langchain-mistralai
+mistralai
+
+# Hugging Face (for local models)
+transformers
+torch
+accelerate
+sentence-transformers
+
+# Vector Database
+chromadb
+
+# Embeddings
+tiktoken
+
+# Document loaders / parsing
+pypdf
+unstructured
+beautifulsoup4
+
+# Environment variables
+python-dotenv
+
+# Async + API handling
+httpx
+aiohttp
+
+# Utilities
+numpy
+pandas
+
+# Optional (for better performance / UI)
+faiss-cpu
+streamlit
+
+# Optional (for advanced agent workflows)
+langgraph
